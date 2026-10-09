@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Program — Narozeniny Richarda Šubrta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="nav scrolled" id="nav">
+        <a href="index.html" class="nav-brand">Richard</a>
+        <ul class="nav-links">
+            <li><a href="index.html">Vítejte</a></li>
+            <li><a href="program.html" class="active">Program</a></li>
+            <li><a href="board.html">Vzkazy</a></li>
+            <li><a href="https://maps.app.goo.gl/qiFZCHQtk3W7UDB48" target="_blank">Lokace</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-header">
+        <h1>Večerní program</h1>
+        <p>Co nás dnes čeká</p>
+    </div>
+
+    <div class="timeline">
+
+        <div class="timeline-item">
+            <div class="timeline-time">18:00</div>
+            <div class="timeline-event">
+                <h3>Začátek predrink u mě</h3>
+                <p>Kdo má zájem.</p>
+            </div>
+        </div>
+
+        <div class="timeline-item">
+            <div class="timeline-time">20:00</div>
+            <div class="timeline-event">
+                <h3>Zahájení oslavy</h3>
+            </div>
+        </div>
+
+        <div class="timeline-item">
+            <div class="timeline-time">23:00</div>
+            <div class="timeline-event">
+                <h3>Scénické čtení vašich vzkazíků</h3>
+            </div>
+        </div>
+
+        <div class="timeline-item">
+            <div class="timeline-time">01:00</div>
+            <div class="timeline-event">
+                <h3>Vyhození z hospody</h3>
+                <p>Pelášení na kutě.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="footer">
+        <p>© 2026</p>
+    </footer>
+
+    <script>
+    (function() {
+        var nav = document.getElementById('nav');
+        window.addEventListener('scroll', function() {
+            nav.classList.toggle('scrolled', window.scrollY > 20);
+        });
+    })();
+    </script>
+</body>
+</html>

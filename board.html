@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vzkazy — Narozeniny Richarda Šubrta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="nav scrolled" id="nav">
+        <a href="index.html" class="nav-brand">Richard</a>
+        <ul class="nav-links">
+            <li><a href="index.html">Vítejte</a></li>
+            <li><a href="program.html">Program</a></li>
+            <li><a href="board.html" class="active">Vzkazy</a></li>
+            <li><a href="https://maps.app.goo.gl/qiFZCHQtk3W7UDB48" target="_blank">Lokace</a></li>
+        </ul>
+    </nav>
+
+    <!-- ── FORMULÁŘ ───────────────────────────── -->
+    <div id="formView">
+        <div class="board-intro">
+            <h1>Při prvním setkání s Richardem<br>mě napadlo, <em>že je...</em></h1>
+            <p class="sub">Dokonči větu</p>
+        </div>
+
+        <div class="board-form-wrap">
+            <span class="board-prompt-label">Když jsem poprvý potkal(a) Richarda, myslel(a) jsem si že je...</span>
+            <textarea id="msgInput" placeholder="...tvoje odpověď zde" maxlength="300"></textarea>
+            <div class="form-footer-row">
+                <input type="text" class="name-input" id="nameInput" placeholder="Tvoje jméno (volitelné)" maxlength="40">
+                <button class="btn btn-primary" id="submitBtn">Odeslat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── PODĚKOVÁNÍ ─────────────────────────── -->
+    <div id="thankYouView" style="display:none;">
+        <div class="thank-you">
+            <h2>Děkujeme.</h2>
+            <p>Tvůj vzkaz byl uložen. Nástěnka bude odhalena tento večer.</p>
+        </div>
+    </div>
+
+    <!-- ── NÁSTĚNKA (chráněno heslem) ────────── -->
+    <div class="board-section" id="boardView" style="display:none;">
+        <h2 class="board-title">Při prvním setkání s Richardem mě napadlo, <em>že je...</em></h2>
+        <div class="cards-scatter" id="cardsContainer">
+            <div class="board-empty" id="emptyState">Zatím žádné vzkazy.</div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026</p>
+    </footer>
+
+    <!-- ── TLAČÍTKO ZOBRAZIT VÝSLEDKY ─────────── -->
+    <button class="show-results-btn" id="showResultsBtn">Zobrazit výsledky</button>
+
+    <!-- ── MODÁL S HESLEM ─────────────────────── -->
+    <div class="pw-overlay" id="pwOverlay">
+        <div class="pw-box">
+            <h3>Heslo</h3>
+            <p class="pw-sub">Toto je překvapení — pouze pro pořadatele.</p>
+            <input type="password" class="pw-input" id="pwInput" placeholder="••••" maxlength="30" autocomplete="off">
+            <div class="pw-error" id="pwError"></div>
+            <button class="btn btn-primary" id="pwSubmitBtn" style="width:100%;">Odemknout</button>
+            <button class="pw-cancel-btn" id="pwCancelBtn">Zrušit</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         FIREBASE SETUP (jednorázové, cca 5 minut)
+         ═══════════════════════════════════════════════
+         1. Jdi na https://console.firebase.google.com
+         2. "Create a project" → libovolný název → vypni Analytics
+         3. Sidebar: Build → Realtime Database → Create Database
+            → libovolný region → "Start in test mode" → Enable
+         4. Ozubené kolečko → Project settings → Your apps → ikona </>
+            → zaregistruj aplikaci → zkopíruj firebaseConfig níže
+         ═══════════════════════════════════════════════ -->
+
+    <!-- Firebase compat SDK (works over file://) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <script>
+        // ── VLOŽ SVÉ FIREBASE HODNOTY SEM ────────────────────────────
+        var firebaseConfig = {
+            apiKey:            "AIzaSyDkCIFyMaP2IzM5o6AJX76wx8sFK5dR9pw",
+            authDomain:        "bday-16fc9.firebaseapp.com",
+            databaseURL:       "https://bday-16fc9-default-rtdb.firebaseio.com",
+            projectId:         "bday-16fc9",
+            storageBucket:     "bday-16fc9.firebasestorage.app",
+            messagingSenderId: "1083869251629",
+            appId:             "1:1083869251629:web:45063677c812a706b850a4"
+        };
+        // ─────────────────────────────────────────────────────────────
+
+        var PASSWORD   = 'pero';
+        var configured = firebaseConfig.apiKey.indexOf('PASTE') === -1;
+        var allMessages = [];
+        var msgRef;
+
+        // ── Init Firebase if configured ───────────────────────────────
+        if (configured) {
+            firebase.initializeApp(firebaseConfig);
+            msgRef = firebase.database().ref('messages');
+            msgRef.on('value', function(snapshot) {
+                allMessages = [];
+                snapshot.forEach(function(child) {
+                    allMessages.push({ id: child.key, text: child.val().text, name: child.val().name });
+                });
+                renderCards();
+            });
+        }
+
+        // ── Password modal ────────────────────────────────────────────
+        var pwOverlay     = document.getElementById('pwOverlay');
+        var pwInput       = document.getElementById('pwInput');
+        var pwError       = document.getElementById('pwError');
+        var pwSubmitBtn   = document.getElementById('pwSubmitBtn');
+        var pwCancelBtn   = document.getElementById('pwCancelBtn');
+        var showResultsBtn = document.getElementById('showResultsBtn');
+
+        showResultsBtn.addEventListener('click', function() {
+            pwInput.value = '';
+            pwError.textContent = '';
+            pwOverlay.classList.add('open');
+            setTimeout(function() { pwInput.focus(); }, 80);
+        });
+
+        pwCancelBtn.addEventListener('click', closeModal);
+
+        pwOverlay.addEventListener('click', function(e) {
+            if (e.target === pwOverlay) closeModal();
+        });
+
+        pwInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter')  checkPassword();
+            if (e.key === 'Escape') closeModal();
+        });
+
+        pwSubmitBtn.addEventListener('click', checkPassword);
+
+        function closeModal() { pwOverlay.classList.remove('open'); }
+
+        function checkPassword() {
+            if (pwInput.value === PASSWORD) {
+                closeModal();
+                revealBoard();
+            } else {
+                pwError.textContent = 'Špatné heslo.';
+                pwInput.classList.remove('shake');
+                void pwInput.offsetWidth;
+                pwInput.classList.add('shake');
+                pwInput.select();
+            }
+        }
+
+        function revealBoard() {
+            document.getElementById('formView').style.display     = 'none';
+            document.getElementById('thankYouView').style.display = 'none';
+            document.getElementById('boardView').style.display    = 'block';
+            renderCards();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ── Submit ────────────────────────────────────────────────────
+        document.getElementById('submitBtn').addEventListener('click', submitMessage);
+        document.getElementById('msgInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submitMessage();
+        });
+
+        function submitMessage() {
+            var text = document.getElementById('msgInput').value.trim();
+            if (!text) { shake(document.getElementById('msgInput')); return; }
+            var name = document.getElementById('nameInput').value.trim() || 'Anonym';
+            var btn  = document.getElementById('submitBtn');
+
+            if (!configured) {
+                alert('Firebase ještě není nastaven.\nOtevři board.html a postupuj podle instrukcí v komentářích.');
+                return;
+            }
+
+            btn.disabled    = true;
+            btn.textContent = 'Odesílám...';
+
+            msgRef.push({ text: text, name: name, ts: Date.now() })
+                .then(function() {
+                    document.getElementById('formView').style.display     = 'none';
+                    document.getElementById('thankYouView').style.display = 'block';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                })
+                .catch(function(err) {
+                    console.error(err);
+                    alert('Vzkaz se nepodařilo odeslat. Zkontroluj připojení k internetu.');
+                })
+                .finally(function() {
+                    btn.disabled    = false;
+                    btn.textContent = 'Odeslat';
+                });
+        }
+
+        // ── Render scatter board ──────────────────────────────────────
+        function renderCards() {
+            var container = document.getElementById('cardsContainer');
+            var empty     = document.getElementById('emptyState');
+            if (allMessages.length === 0) { empty.style.display = 'block'; return; }
+            empty.style.display = 'none';
+            container.innerHTML = allMessages.map(function(m) {
+                var rot = seededRot(m.id);
+                var mt  = seededMt(m.id);
+                return '<div class="msg-card" style="transform:rotate(' + rot + 'deg);margin-top:' + mt + 'rem;">'
+                    + '<p class="msg-card-text">"...' + esc(m.text) + '"</p>'
+                    + '<span class="msg-card-author">' + esc(m.name) + '</span>'
+                    + '</div>';
+            }).join('');
+        }
+
+        function seededRot(id) {
+            return (((simpleHash(id) % 140) - 70) / 10).toFixed(1);
+        }
+
+        function seededMt(id) {
+            return ((simpleHash(id + 'mt') % 150) / 100).toFixed(2);
+        }
+
+        function simpleHash(str) {
+            var h = 0;
+            for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) & 0xffffffff;
+            return Math.abs(h);
+        }
+
+        function esc(s) {
+            var d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function shake(el) {
+            el.style.transition = 'transform 0.08s';
+            el.style.transform  = 'translateX(-5px)';
+            setTimeout(function() { el.style.transform = 'translateX(5px)'; }, 80);
+            setTimeout(function() { el.style.transform = ''; }, 160);
+        }
+    </script>
+
+    <script>
+    (function() {
+        var nav = document.getElementById('nav');
+        window.addEventListener('scroll', function() {
+            nav.classList.toggle('scrolled', window.scrollY > 20);
+        });
+    })();
+    </script>
+</body>
+</html>
