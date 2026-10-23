@@ -11,6 +11,8 @@
 </head>
 <body>
 
+    <div class="cursor-aura" id="cursorAura"></div>
+
     <nav class="nav scrolled" id="nav">
         <a href="index.html" class="nav-brand">Richard</a>
         <ul class="nav-links">
@@ -212,10 +214,10 @@
             var empty     = document.getElementById('emptyState');
             if (allMessages.length === 0) { empty.style.display = 'block'; return; }
             empty.style.display = 'none';
-            container.innerHTML = allMessages.map(function(m) {
+            container.innerHTML = allMessages.map(function(m, idx) {
                 var rot = seededRot(m.id);
                 var mt  = seededMt(m.id);
-                return '<div class="msg-card" style="transform:rotate(' + rot + 'deg);margin-top:' + mt + 'rem;">'
+                return '<div class="msg-card" style="transform:rotate(' + rot + 'deg);margin-top:' + mt + 'rem;animation-delay:' + (idx * 0.07) + 's;">'
                     + '<p class="msg-card-text">"...' + esc(m.text) + '"</p>'
                     + '<span class="msg-card-author">' + esc(m.name) + '</span>'
                     + '</div>';
@@ -255,7 +257,13 @@
         var nav = document.getElementById('nav');
         window.addEventListener('scroll', function() {
             nav.classList.toggle('scrolled', window.scrollY > 20);
-        });
+        }, { passive: true });
+
+        var aura = document.getElementById('cursorAura');
+        document.addEventListener('mousemove', function(e) {
+            aura.style.left = e.clientX + 'px';
+            aura.style.top  = e.clientY + 'px';
+        }, { passive: true });
     })();
     </script>
 </body>

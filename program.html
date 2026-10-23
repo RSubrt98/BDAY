@@ -11,6 +11,8 @@
 </head>
 <body>
 
+    <div class="cursor-aura" id="cursorAura"></div>
+
     <nav class="nav scrolled" id="nav">
         <a href="index.html" class="nav-brand">Richard</a>
         <ul class="nav-links">
@@ -70,6 +72,26 @@
         var nav = document.getElementById('nav');
         window.addEventListener('scroll', function() {
             nav.classList.toggle('scrolled', window.scrollY > 20);
+        }, { passive: true });
+
+        // Cursor-reactive aura
+        var aura = document.getElementById('cursorAura');
+        document.addEventListener('mousemove', function(e) {
+            aura.style.left = e.clientX + 'px';
+            aura.style.top  = e.clientY + 'px';
+        }, { passive: true });
+
+        // Scroll reveal for timeline items
+        var io = new IntersectionObserver(function(entries) {
+            entries.forEach(function(e) {
+                if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); }
+            });
+        }, { threshold: 0.15 });
+
+        document.querySelectorAll('.timeline-item').forEach(function(el, i) {
+            el.classList.add('reveal');
+            el.style.transitionDelay = (i * 0.12) + 's';
+            io.observe(el);
         });
     })();
     </script>

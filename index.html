@@ -11,6 +11,8 @@
 </head>
 <body>
 
+    <div class="cursor-aura" id="cursorAura"></div>
+
     <nav class="nav" id="nav">
         <a href="index.html" class="nav-brand">Richard</a>
         <ul class="nav-links">
@@ -67,9 +69,41 @@
 
     <script>
     (function() {
+        // Nav scroll
         var nav = document.getElementById('nav');
         window.addEventListener('scroll', function() {
             nav.classList.toggle('scrolled', window.scrollY > 60);
+        }, { passive: true });
+
+        // Cursor-reactive aura
+        var aura = document.getElementById('cursorAura');
+        document.addEventListener('mousemove', function(e) {
+            aura.style.left = e.clientX + 'px';
+            aura.style.top  = e.clientY + 'px';
+        }, { passive: true });
+
+        // Scroll parallax on filmstrip panels (pointer devices only)
+        var imgs = document.querySelectorAll('.filmstrip-panel img');
+        if (window.matchMedia('(hover: hover)').matches) {
+            window.addEventListener('scroll', function() {
+                var y = window.scrollY;
+                if (imgs[0]) imgs[0].style.transform = 'translateY(' + (-y * 0.055) + 'px)';
+                if (imgs[2]) imgs[2].style.transform = 'translateY(' + ( y * 0.055) + 'px)';
+            }, { passive: true });
+        }
+
+        // Scroll reveal for welcome body
+        var io = new IntersectionObserver(function(entries) {
+            entries.forEach(function(e) {
+                if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); }
+            });
+        }, { threshold: 0.1 });
+
+        var targets = document.querySelectorAll('.welcome-body h2, .welcome-body .divider, .welcome-body p, .welcome-body ul, .cta-row');
+        targets.forEach(function(el, i) {
+            el.classList.add('reveal');
+            el.style.transitionDelay = (i * 0.08) + 's';
+            io.observe(el);
         });
     })();
     </script>
